@@ -1,0 +1,1660 @@
+<!DOCTYPE html>
+<html lang="en"> <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tanim Ai</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Lato:wght@700;900&display=swap" rel="stylesheet">
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+        inlineMath: [['$','$'], ['\\(','\\)']],
+        displayMath: [['$$','$$'], ['\\[','\\]']],
+        processEscapes: true
+        },
+        "HTML-CSS": { linebreaks: { automatic: true } },
+        SVG: { linebreaks: { automatic:true } },
+        displayAlign: "center"
+    });
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        body, html {
+            font-family: 'Inter', 'Hind Siliguri', sans-serif; /* Default font stack */
+            background: linear-gradient(135deg, #2A004F, #1A0030);
+            color: #EAEAEA;
+            height: 100%;
+            margin: 0;
+            overflow: hidden; 
+        }
+        /* Specific rule for Bangla to prioritize Hind Siliguri */
+        html[lang="bn"] body,
+        html[lang="bn"] .chat-message .message-content-area, /* Apply to message content */
+        html[lang="bn"] .input-area input#messageInput::placeholder,
+        html[lang="bn"] .input-area button#sendButton,
+        html[lang="bn"] .language-toggle-button,
+        html[lang="bn"] .tooltiptext,
+        html[lang="bn"] .thinking-thoughts,
+        html[lang="bn"] #codePreviewModalTitle,
+        html[lang="bn"] .code-control-button {
+            font-family: 'Hind Siliguri', 'Inter', sans-serif;
+        }
+        /* Ensure MathJax uses a compatible font or its own */
+        .MathJax_Display, .MathJax {
+            font-family: 'Times New Roman', Times, serif !important; /* Example, or let MathJax handle it */
+        }
+
+
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            width: 100%;
+        }
+        .chat-header {
+            background-color: #3D006A;
+            color: white;
+            padding: 5px 15px; 
+            text-align: center;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #4A007F;
+            flex-shrink: 0; 
+            min-height: 65px; 
+        }
+        .header-logo-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center; 
+            height: 55px; 
+            font-family: 'Lato', sans-serif;
+            flex-grow: 1; 
+        }
+        #headerCanvasBlackhole {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+        }
+        .header-logo-text {
+            font-size: 30px; 
+            font-weight: 900;
+            position: relative;
+            z-index: 2;
+            padding: 0 2px; 
+            white-space: nowrap;
+            user-select: none;
+        }
+        #headerLogoTanim {
+            color: #ffffff;
+            text-shadow: 0 0 3px #dddddd, 0 0 5px #c0c0c0, 0 0 7px #b0b0b0; 
+        }
+        #headerLogoAi {
+            color: #ffA500;
+            text-shadow: 0 0 3px #ff6347, 0 0 5px #ff8c00, 0 0 7px #ffA500; 
+        }
+
+        .language-toggle-button {
+            background-color: #8A2BE2; 
+            color: white;
+            padding: 6px 12px;
+            border: none;
+            border-radius: 18px;
+            cursor: pointer;
+            font-size: 0.75em;
+            font-weight: 500;
+            transition: background-color 0.3s, transform 0.2s;
+            flex-shrink: 0; 
+            margin-left: 15px; 
+        }
+        .language-toggle-button:hover {
+            background-color: #7B1FA2; 
+            transform: scale(1.05);
+        }
+        .chat-log {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .chat-message-wrapper {
+           display: flex;
+           flex-direction: column;
+           margin-bottom: 10px; 
+        }
+        .user-message-wrapper {
+           align-items: flex-end;
+        }
+        .ai-message-wrapper {
+           align-items: flex-start;
+        }
+        .chat-message {
+            padding: 12px 18px;
+            border-radius: 20px;
+            max-width: 78%; 
+            line-height: 1.6;
+            word-wrap: break-word; 
+            animation: fadeIn 0.5s ease-out;
+            position: relative; 
+            display: inline-block; 
+            text-align: left; 
+        }
+        .ai-message .message-content-area {
+             text-align: left; 
+        }
+        .message-timer {
+            position: absolute;
+            top: -15px; 
+            left: 10px;
+            font-size: 0.65em;
+            color: #a0a0a0;
+            background-color: rgba(42, 0, 79, 0.7); 
+            padding: 1px 4px;
+            border-radius: 3px;
+        }
+        .user-message-wrapper .message-timer {
+            right: 10px;
+            left: auto;
+        }
+       .math-toggle-button {
+            position: absolute;
+            top: 3px;
+            right: 3px;
+            background-color: rgba(90, 24, 154, 0.7); 
+            color: #EAEAEA;
+            border: 1px solid #7F00B2; 
+            border-radius: 4px;
+            width: 26px;
+            height: 20px;
+            font-size: 0.7em; 
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+            z-index: 5; 
+            line-height: 1; 
+            padding: 0; 
+            transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
+        }
+        .math-toggle-button:hover {
+            background-color: #7F00B2; 
+            transform: translateY(-1px);
+        }
+        .message-content-area {
+            padding-top: 2px; 
+            min-height: 1em; 
+        }
+        .ai-message mjx-container[display="true"] {
+            display: block !important;
+            margin-left: auto !important;
+            margin-right: auto !important;
+            text-align: center;
+        }
+        .ai-message mjx-container { 
+            text-align: inherit; 
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .user-message {
+            background-color: #4A007F; 
+            color: #EAEAEA;
+            border-bottom-right-radius: 6px; 
+            border-bottom-left-radius: 20px;
+        }
+        .ai-message {
+            background-color: #2A004F; 
+            color: #E0E0E0;
+            border-bottom-left-radius: 6px; 
+            border-bottom-right-radius: 20px;
+            border: 1px solid #5A189A; 
+        }
+        .chat-message img.message-image {
+            max-width: 100%; 
+            max-height: 250px; 
+            border-radius: 10px; 
+            margin-bottom: 8px; 
+            display: block; 
+        }
+        .ai-message strong {
+            color: #BB86FC; 
+        }
+
+        /* Code Block Styles */
+        .ai-code-block-container {
+            background-color: #1e1e1e; 
+            border-radius: 8px;
+            margin-top: 8px;
+            border: 1px solid #4A007F;
+            overflow: hidden; 
+        }
+        .ai-code-block-container pre {
+            background-color: transparent; 
+            color: #d4d4d4; 
+            padding: 15px;
+            margin: 0; 
+            overflow-x: auto; 
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.9em;
+            line-height: 1.5;
+            white-space: pre; 
+        }
+        .ai-code-block-container code {
+            font-family: inherit; 
+            background: none; 
+            color: inherit;
+            padding: 0;
+        }
+        .code-controls {
+            display: flex;
+            justify-content: flex-end;
+            padding: 5px 10px;
+            background-color: rgba(0,0,0,0.2); 
+            border-top: 1px solid #4A007F;
+        }
+        .code-control-button {
+            background: none;
+            border: 1px solid #7F00B2;
+            color: #BB86FC;
+            padding: 4px 8px;
+            margin-left: 8px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background-color 0.2s, color 0.2s;
+        }
+        .code-control-button:hover {
+            background-color: #7F00B2;
+            color: white;
+        }
+
+        /* Code Preview Modal Styles */
+        .code-preview-modal {
+            display: none; 
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.7); 
+            justify-content: center;
+            align-items: center;
+        }
+        .code-preview-modal-content {
+            background-color: #1e0a33; 
+            margin: auto;
+            padding: 0;
+            border: 1px solid #5A189A;
+            border-radius: 10px;
+            width: 85%;
+            max-width: 900px;
+            height: 75%;
+            max-height: 650px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.6);
+        }
+        .code-preview-modal-header {
+            padding: 12px 18px;
+            background-color: #3D006A; 
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #4A007F;
+            border-top-left-radius: 9px; 
+            border-top-right-radius: 9px;
+        }
+        #codePreviewModalTitle {
+            font-size: 1.15em;
+            font-weight: 600;
+        }
+        .code-preview-modal-close-btn {
+            color: #bbb;
+            float: right;
+            font-size: 30px;
+            font-weight: bold;
+            background: none;
+            border: none;
+            cursor: pointer;
+            line-height: 1;
+        }
+        .code-preview-modal-close-btn:hover,
+        .code-preview-modal-close-btn:focus {
+            color: white;
+            text-decoration: none;
+        }
+        .code-preview-modal-body {
+            padding: 0; 
+            flex-grow: 1; 
+            overflow: hidden; 
+            background-color: #ffffff; 
+            border-bottom-left-radius: 9px;
+            border-bottom-right-radius: 9px;
+        }
+        .code-preview-modal-body iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background-color: #fff; 
+        }
+        .code-preview-modal-body pre { 
+            background-color: #1e1e1e; 
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 0 0 8px 8px; 
+            height: 100%;
+            overflow: auto;
+            box-sizing: border-box;
+            margin:0;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.9em;
+        }
+
+
+        .input-area {
+            display: flex;
+            padding: 10px 15px;
+            background-color: rgba(20, 0, 35, 0.95); 
+            align-items: center;
+            gap: 8px;
+            border-top: 1px solid #4A007F;
+            flex-shrink: 0; 
+        }
+        .horizontal-icon-buttons {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .icon-button {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: none;
+            background-color: #7F00B2; 
+            color: white;
+            cursor: pointer;
+            font-size: 1.2em; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            position: relative; 
+        }
+        .icon-button:hover {
+            background-color: #5A189A; 
+            transform: scale(1.1);
+        }
+        .icon-button.active {
+            background-color: #5A189A; 
+            box-shadow: 0 0 12px 3px rgba(50, 205, 50, 0.75); 
+        }
+        .icon-button .tooltiptext {
+           visibility: hidden;
+           width: 120px;
+           background-color: #5A189A;
+           color: #fff;
+           text-align: center;
+           border-radius: 6px;
+           padding: 5px 0;
+           position: absolute;
+           z-index: 10;
+           bottom: 125%; 
+           left: 50%;
+           margin-left: -60px; 
+           opacity: 0;
+           transition: opacity 0.3s;
+           font-size: 0.8em;
+           white-space: nowrap;
+        }
+        .icon-button:hover .tooltiptext {
+           visibility: visible;
+           opacity: 1;
+        }
+        .thinking-thoughts-wrapper {
+            padding: 0 15px; 
+            display: none; 
+            flex-shrink: 0;
+        }
+        .thinking-thoughts {
+            background-color: rgba(42, 0, 79, 0.85); 
+            color: #eee;
+            border: 1px solid #7F00B2; 
+            border-radius: 8px;
+            padding: 10px;
+            margin-top: 5px;
+            margin-bottom: 5px;
+            font-size: 0.85em;
+            white-space: pre-wrap; 
+            max-height: 180px; 
+            overflow-y: auto; 
+            position: relative; 
+            animation: fadeInThoughts 0.5s ease-out;
+        }
+        #aiThoughtsContent { /* New ID for thoughts content */
+            padding-top: 5px;
+            white-space: pre-wrap; /* Ensure line breaks in thoughts are respected */
+        }
+        .thinking-thoughts p {
+            margin-bottom: 8px;
+        }
+        .thinking-thoughts p:last-child {
+            margin-bottom: 0;
+        }
+        .thinking-thoughts-close-btn {
+            position: absolute;
+            top: 5px;
+            right: 8px;
+            background: none;
+            border: none;
+            color: #BB86FC; 
+            font-size: 1.5em;
+            cursor: pointer;
+            line-height: 1; 
+            padding: 0 5px; 
+        }
+        .thinking-thoughts-close-btn:hover {
+            color: #EAEAEA; 
+        }
+        @keyframes fadeInThoughts {
+           from { opacity: 0; max-height: 0; }
+           to { opacity: 1; max-height: 180px; }
+        }
+        .input-area input#messageInput {
+            flex-grow: 1;
+            padding: 10px 15px;
+            border: 1px solid #4A007F;
+            background-color: #2A004F;
+            color: #EAEAEA;
+            border-radius: 20px;
+            font-size: 0.95em;
+            outline: none;
+            transition: border-color 0.3s, box-shadow 0.3s;
+            min-width: 100px; 
+        }
+        .input-area input#messageInput::placeholder {
+            color: #aaa;
+        }
+        .input-area input#messageInput:focus {
+            border-color: #9D4EDD; 
+            box-shadow: 0 0 10px rgba(157, 78, 221, 0.5); 
+        }
+        .input-area button#sendButton {
+            padding: 9px 14px;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            background-color: #C77DFF; 
+            color: #1A0030; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            font-size: 0.9em;
+            min-width: 38px; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .input-area button#micButton {
+            padding: 9px; 
+            width: 38px;   
+            height: 38px;  
+            border-radius: 50%; 
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background-color: #7F00B2; 
+            color: #1A0030; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .input-area button#sendButton:hover, .input-area button#micButton:hover {
+            background-color: #B55EFA; 
+            transform: translateY(-2px) scale(1.05); 
+        }
+        .input-area button#micButton.mic-listening {
+            background-color: #4CAF50; 
+        }
+        .input-area button#micButton.mic-ai-speaking {
+            background-color: #F44336; 
+        }
+        .input-area button#micButton.mic-listening .mic-icon,
+        .input-area button#micButton.mic-ai-speaking .mic-icon {
+            fill: white; 
+        }
+        input#imageInput {
+            display: none; 
+        }
+        #imagePreview {
+            max-width: 200px;
+            max-height: 200px;
+            margin: 0 auto 10px auto; 
+            border-radius: 8px;
+            border: 2px dashed #7F00B2; 
+            padding: 5px;
+            background-color: rgba(42,0,79,0.5); 
+            display: none; 
+            flex-shrink: 0; 
+        }
+        #loadingIndicator {
+            text-align: center;
+            padding: 10px;
+            font-style: italic;
+            color: #C77DFF; 
+            display: none; 
+            flex-shrink: 0; 
+        }
+        .chat-log::-webkit-scrollbar, .thinking-thoughts::-webkit-scrollbar {
+            width: 8px;
+        }
+        .chat-log::-webkit-scrollbar-track, .thinking-thoughts::-webkit-scrollbar-track {
+            background: #2A004F; 
+            border-radius: 10px;
+        }
+        .chat-log::-webkit-scrollbar-thumb, .thinking-thoughts::-webkit-scrollbar-thumb {
+            background: #7F00B2; 
+            border-radius: 10px;
+        }
+        .chat-log::-webkit-scrollbar-thumb:hover, .thinking-thoughts::-webkit-scrollbar-thumb:hover {
+            background: #5A189A; 
+        }
+        .mic-icon {
+            width: 18px; 
+            height: 18px; 
+            fill: white; 
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <div id="headerTanimAiLogo" class="header-logo-wrapper">
+                <canvas id="headerCanvasBlackhole"></canvas>
+                <span id="headerLogoTanim" class="header-logo-text">TANIM</span>
+                <span id="headerLogoAi" class="header-logo-text">Ai</span>
+            </div>
+            <button id="languageToggle" class="language-toggle-button"></button>
+        </div>
+        <div class="chat-log" id="chatLog">
+            </div>
+        <div id="loadingIndicator">
+            </div>
+        <div class="thinking-thoughts-wrapper" id="thinkingThoughtsWrapper">
+            <div class="thinking-thoughts"> <button id="closeThinkingThoughtsBtn" class="thinking-thoughts-close-btn" title="Close Thoughts">×</button>
+                <div id="aiThoughtsContent" style="padding-top: 5px;"></div> </div>
+        </div>
+        <img id="imagePreview" src="#" alt="Chobi Preview"/>
+        <div class="input-area">
+            <div class="horizontal-icon-buttons">
+                <button id="thinkingButton" class="icon-button">
+                    🤔
+                    <span class="tooltiptext" id="thinkingTooltip"></span>
+                </button>
+                <button id="researchButton" class="icon-button">
+                    🔍
+                    <span class="tooltiptext" id="researchTooltip"></span>
+                </button>
+                <label for="imageInput" id="uploadImageLabel" class="icon-button">
+                    🖼️
+                    <span class="tooltiptext" id="imageUploadTooltip"></span>
+                </label>
+                <input type="file" id="imageInput" accept="image/*">
+            </div>
+            <input type="text" id="messageInput" placeholder="Type your message...">
+            <button id="micButton" title="Speak">
+                <svg viewBox="0 0 24 24" class="mic-icon">
+                    <path fill="currentColor" d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.91-3.91c-.49-.49-1.28-.49-1.77 0L15 11.23V5c0-2.76-2.24-5-5-5S5 2.24 5 5v6.23l-.86-.86c-.49-.49-1.28-.49-1.77 0s-.49 1.28 0 1.77L5.92 15.7c.49.49 1.13.7 1.77.7h.01c.01 0 .01 0 .02 0h6.58c.64 0 1.28-.21 1.77-.7l3.59-3.59c.49-.49.49-1.28 0-1.77zM7 5c0-1.66 1.34-3 3-3s3 1.34 3 3v6H7V5zm10 12h-2v3c0 .55-.45 1-1 1s-1-.45-1-1v-3H9v3c0 .55-.45 1-1 1s-1-.45-1-1v-3H5c-.55 0-1-.45-1-1s.45-1 1-1h14c.55 0 1 .45 1 1s-.45 1-1 1z"/>
+                </svg>
+            </button>
+            <button id="sendButton">Send</button>
+        </div>
+    </div>
+
+    <div id="codePreviewModal" class="code-preview-modal">
+        <div class="code-preview-modal-content">
+            <div class="code-preview-modal-header">
+                <span id="codePreviewModalTitle"></span>
+                <button id="closeCodePreviewModalBtn" class="code-preview-modal-close-btn">&times;</button>
+            </div>
+            <div class="code-preview-modal-body">
+                <iframe id="codePreviewIframe"></iframe>
+                <pre id="codePreviewPre"><code id="codePreviewCode"></code></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements 
+        const chatLogEl = document.getElementById('chatLog');
+        const messageInputEl = document.getElementById('messageInput');
+        const sendButtonEl = document.getElementById('sendButton');
+        const micButtonEl = document.getElementById('micButton');
+        const thinkingButtonEl = document.getElementById('thinkingButton');
+        const researchButtonEl = document.getElementById('researchButton');
+        const imageInputEl = document.getElementById('imageInput');
+        const imagePreviewEl = document.getElementById('imagePreview');
+        const loadingIndicatorEl = document.getElementById('loadingIndicator');
+        const languageToggleButtonEl = document.getElementById('languageToggle');
+        const thinkingThoughtsWrapperEl = document.getElementById('thinkingThoughtsWrapper');
+        const aiThoughtsContentEl = document.getElementById('aiThoughtsContent'); 
+        const closeThinkingThoughtsBtnEl = document.getElementById('closeThinkingThoughtsBtn');
+        const thinkingTooltipEl = document.getElementById('thinkingTooltip');
+        const researchTooltipEl = document.getElementById('researchTooltip');
+        const imageUploadTooltipEl = document.getElementById('imageUploadTooltip');
+        const codePreviewModalEl = document.getElementById('codePreviewModal');
+        const codePreviewModalTitleEl = document.getElementById('codePreviewModalTitle');
+        const closeCodePreviewModalBtnEl = document.getElementById('closeCodePreviewModalBtn');
+        const codePreviewIframeEl = document.getElementById('codePreviewIframe');
+        const codePreviewPreEl = document.getElementById('codePreviewPre');
+        const codePreviewCodeEl = document.getElementById('codePreviewCode');
+
+
+        // Language and Text Data
+        const translations = {
+            bn: {
+                chatHeader: "Tanim Ai", 
+                toggleButton: "English",
+                thinkingModeTooltip: "Deep Thinking",
+                researchModeTooltip: "Deep Research",
+                imageUploadTooltip: "Upload Image",
+                inputPlaceholder: "আপনার কথা লিখুন...",
+                sendButton: "পাঠান",
+                loading: "এআই চিন্তা করছে...",
+                aiDefaultGreeting: "আসসালামু আলাইকুম! আমি Tanim Ai। আপনি কি জানতে চান?",
+                imageAnalysisRequest: "[ছবি বিশ্লেষণের অনুরোধ]",
+                imageInChatAlt: "Pathano Chobi",
+                errorAPIGeneric: " দুঃখিত, আমি উত্তর তৈরি করতে পারিনি।",
+                errorAPIFetch: "দুঃখিত, একটি সমস্যা হয়েছে:",
+                errorImageUpload: "অনুগ্রহ করে প্রথমে একটি ছবি আপলোড করুন।",
+                errorImageAnalyze: " দুঃখিত, আমি ছবিটি বিশ্লেষণ করতে পারিনি।",
+                imageAnalysisResultPrefix: "<strong>ছবির বিশ্লেষণ:</strong>",
+                deepThinkingActive: "গভীরভাবে চিন্তা করা হচ্ছে...",
+                deepResearchActive: "গভীরভাবে গবেষণা করা হচ্ছে...",
+                speakTooltip: "কথা বলুন",
+                micListeningTooltip: "শুনছি...",
+                micProcessingTooltip: "প্রসেস করা হচ্ছে...",
+                micAISpeakingTooltip: "এআই কথা বলছে (বন্ধ করতে ক্লিক করুন)",
+                thinkingThoughtsPlaceholder: "এআই যা ভাবছে তা এখানে দেখানো হবে...",
+                aiThinkingProcess: [ // Detailed thoughts for Bangla
+                    "এখন ভাবছি...",
+                    "আপনার বার্তার উপর ভিত্তি করে তথ্য বিশ্লেষণ করছি এবং একটি সৃজনশীল উত্তর তৈরি করার চেষ্টা করছি।",
+                    "তথ্য সাজাচ্ছি...",
+                    "উত্তর প্রস্তুত করছি..."
+                ],
+                researchingPlaceholder: (query) => `"${query}" এর জন্য তথ্য অনুসন্ধান করা হচ্ছে...`,
+                elapsedTime: (time) => `সময়: ${time}s`,
+                micError: "মাইক্রোফোন ব্যবহারের অনুমতি প্রয়োজন। অনুগ্রহ করে আপনার ব্রাউজারের এই সাইটের জন্য সেটিংস-এ গিয়ে মাইক্রোফোনের অনুমতি দিন।",
+                closeThoughtsTooltip: "চিন্তা বন্ধ করুন",
+                mathToggleShowLaTeX: "LaTeX দেখান",
+                mathToggleRenderMath: "গণিত রেন্ডার",
+                apiKeyMissing: (provider) => `${provider} API Key দেওয়া হয়নি। অনুগ্রহ করে API Key দিন।`,
+                codeBlockCopyTooltip: "কোড কপি করুন",
+                codeBlockPreviewTooltip: "কোড প্রিভিউ দেখুন",
+                codeCopied: "কপি হয়েছে!",
+                codePreviewModalTitle: "কোড প্রিভিউ",
+            },
+            en: {
+                chatHeader: "Tanim Ai", 
+                toggleButton: "বাংলা",
+                thinkingModeTooltip: "Deep Thinking",
+                researchModeTooltip: "Deep Research",
+                imageUploadTooltip: "Upload Image",
+                inputPlaceholder: "Type your message...",
+                sendButton: "Send",
+                loading: "AI is thinking...",
+                aiDefaultGreeting: "Hello! I am Tanim Ai. What would you like to know?",
+                imageAnalysisRequest: "[Image Analysis Request]",
+                imageInChatAlt: "Sent Image",
+                errorAPIGeneric: " Sorry, I couldn't generate a response.",
+                errorAPIFetch: "Sorry, an error occurred:",
+                errorImageUpload: "Please upload an image first.",
+                errorImageAnalyze: " Sorry, I couldn't analyze the image.",
+                imageAnalysisResultPrefix: "<strong>Image Analysis:</strong>",
+                deepThinkingActive: "Deep thinking in progress...",
+                deepResearchActive: "Deep research in progress...",
+                speakTooltip: "Speak",
+                micListeningTooltip: "Listening...",
+                micProcessingTooltip: "Processing...",
+                micAISpeakingTooltip: "AI Speaking (Click to Stop)",
+                thinkingThoughtsPlaceholder: "AI's thoughts will be shown here...",
+                 aiThinkingProcess: [ // Detailed thoughts for English
+                    "Now thinking...",
+                    "Analyzing information based on your message and trying to formulate a creative response.",
+                    "Arranging information...",
+                    "Preparing the answer..."
+                ],
+                researchingPlaceholder: (query) => `Researching information for "${query}"...`,
+                elapsedTime: (time) => `Time: ${time}s`,
+                micError: "Microphone permission is required. Please go to your browser's site settings for this site and allow microphone access.",
+                closeThoughtsTooltip: "Close Thoughts",
+                mathToggleShowLaTeX: "Show LaTeX",
+                mathToggleRenderMath: "Render Math",
+                apiKeyMissing: (provider) => `${provider} API Key is missing. Please provide the API Key.`,
+                codeBlockCopyTooltip: "Copy Code",
+                codeBlockPreviewTooltip: "Preview Code",
+                codeCopied: "Copied!",
+                codePreviewModalTitle: "Code Preview",
+            }
+        };
+
+        // Chat State 
+        let chatHistory = [];
+        let currentMode = "normal";
+        let currentBase64Image = null;
+        let currentMimeType = null;
+        let currentImageFullDataUrl = null;
+        let currentLanguage = 'bn';
+        let thinkingThoughtsVisible = false;
+        let modeInterval;
+        let modeStartTime;
+        let activeApiProvider = "gemini";
+        let activeApiKey = "AIzaSyD0s-Q965vxpWkGU6ZIHVtpGFLAk6Z4oTI"; 
+        let lastInputWasVoice = false;
+        let isAiSpeaking = false;
+
+        // Speech Recognition & Synthesis 
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        const speechSynthesis = window.speechSynthesis;
+        let recognition;
+        let currentSpeechUtterance = null;
+        let isRecording = false;
+
+        if (SpeechRecognition) {
+            recognition = new SpeechRecognition();
+            recognition.continuous = false;
+            recognition.interimResults = false;
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                messageInputEl.value = transcript;
+                setMicState('default');
+                lastInputWasVoice = true;
+                processSendMessage();
+            };
+            recognition.onerror = (event) => {
+                console.error("Speech recognition error:", event.error, event.message);
+                let detailedErrorMsg;
+                if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+                    detailedErrorMsg = translations[currentLanguage].micError;
+                } else if (event.error === 'no-speech') {
+                    detailedErrorMsg = currentLanguage === 'bn' ? "কোনো কথা সনাক্ত করা যায়নি। আবার চেষ্টা করুন।" : "No speech was detected. Please try again.";
+                } else {
+                    detailedErrorMsg = translations[currentLanguage].micError + (currentLanguage === 'bn' ? ` (ত্রুটি: ${event.error})` : ` (Error: ${event.error})`);
+                }
+                appendMessage('ai', detailedErrorMsg);
+                setMicState('default');
+                lastInputWasVoice = false;
+            };
+            recognition.onend = () => {
+                if (micButtonEl.classList.contains('mic-listening')) {
+                   setMicState('default');
+                }
+            };
+        } else {
+            console.warn("Speech Recognition API not supported in this browser.");
+            if(micButtonEl) micButtonEl.disabled = true;
+        }
+
+        // --- START: New Animated Logo JavaScript ---
+        const headerLogo_canvas = document.getElementById('headerCanvasBlackhole');
+        const headerLogo_ctx = headerLogo_canvas.getContext('2d');
+        const headerLogo_logoContainer = document.getElementById('headerTanimAiLogo');
+        const headerLogo_logoTanimElem = document.getElementById('headerLogoTanim');
+        const headerLogo_logoAiElem = document.getElementById('headerLogoAi');
+
+        let headerLogo_energyParticlesArray = [];
+        const headerLogo_aiParticleColors = ['#ffA500', '#ff8c00', '#ff4500', '#ffff00', '#ff6600'];
+        const headerLogo_tanimParticleColors = ['#ffffff', '#f0f0f0', '#e0e0e0', '#d0d0d0'];
+        let headerLogo_tanimCharRects = [];
+        let headerLogo_aiCharRects = [];
+        
+        let headerLogo_blackHole = { 
+            x: 0, 
+            y: 0, 
+            radius: 15, 
+            angle: 0, 
+            strength: 0.35, 
+            diskTilt: 0.3 
+        }; 
+        let headerLogo_animationFrameId;
+        let headerLogo_lastParticleEmitTime = 0;
+        const headerLogo_particleEmitInterval = 30; 
+
+        function headerLogo_wrapCharactersAndGetRects(element, container) {
+            const rects = [];
+            const text = element.textContent;
+            element.innerHTML = ''; 
+            const containerRect = container.getBoundingClientRect();
+
+            for (let i = 0; i < text.length; i++) {
+                const char = text[i];
+                const span = document.createElement('span');
+                span.textContent = char;
+                span.style.display = 'inline-block'; 
+                element.appendChild(span);
+
+                const rect = span.getBoundingClientRect();
+                if (rect.width > 0 && rect.height > 0) {
+                    rects.push({
+                        left: rect.left - containerRect.left,
+                        right: rect.right - containerRect.left,
+                        top: rect.top - containerRect.top,
+                        bottom: rect.bottom - containerRect.top,
+                        width: rect.width,
+                        height: rect.height,
+                        centerX: (rect.left - containerRect.left) + rect.width / 2,
+                        centerY: (rect.top - containerRect.top) + rect.height / 2,
+                        char: char
+                    });
+                }
+            }
+            element.dataset.charWrapped = 'true';
+            return rects;
+        }
+
+        function headerLogo_updateElementPositions() {
+            if (!headerLogo_logoTanimElem || !headerLogo_logoAiElem || !headerLogo_logoContainer) return;
+
+            if (headerLogo_logoContainer.offsetWidth === 0 || headerLogo_logoContainer.offsetHeight === 0) {
+                return;
+            }
+            
+            if (!headerLogo_logoTanimElem.dataset.charWrapped || headerLogo_logoTanimElem.children.length === 0 || headerLogo_tanimCharRects.length === 0 || !headerLogo_tanimCharRects.some(r=>r.width > 0)) {
+                headerLogo_tanimCharRects = headerLogo_wrapCharactersAndGetRects(headerLogo_logoTanimElem, headerLogo_logoContainer);
+            }
+            if (!headerLogo_logoAiElem.dataset.charWrapped || headerLogo_logoAiElem.children.length === 0 || headerLogo_aiCharRects.length === 0 || !headerLogo_aiCharRects.some(r=>r.width > 0)) {
+                headerLogo_aiCharRects = headerLogo_wrapCharactersAndGetRects(headerLogo_logoAiElem, headerLogo_logoContainer);
+            }
+            
+            if (headerLogo_aiCharRects.length > 0 && headerLogo_aiCharRects.some(r=>r.width > 0)) {
+                 const aiElemRect = headerLogo_logoAiElem.getBoundingClientRect(); 
+                 const containerRect = headerLogo_logoContainer.getBoundingClientRect();
+                 const aiRightRelativeToContainer = (aiElemRect.right - containerRect.left);
+                 const aiCenterYRelativeToContainer = (aiElemRect.top - containerRect.top) + aiElemRect.height / 2;
+                 headerLogo_blackHole.x = aiRightRelativeToContainer + headerLogo_blackHole.radius * 0.5; 
+                 headerLogo_blackHole.y = aiCenterYRelativeToContainer;
+            } else if (headerLogo_tanimCharRects.length > 0 && headerLogo_tanimCharRects.some(r=>r.width > 0)) {
+                 const tanimElemRect = headerLogo_logoTanimElem.getBoundingClientRect();
+                 const containerRect = headerLogo_logoContainer.getBoundingClientRect();
+                 const tanimRightRelativeToContainer = (tanimElemRect.right - containerRect.left);
+                 const tanimCenterYRelativeToContainer = (tanimElemRect.top - containerRect.top) + tanimElemRect.height / 2;
+                 headerLogo_blackHole.x = tanimRightRelativeToContainer + headerLogo_blackHole.radius * 1.5; 
+                 headerLogo_blackHole.y = tanimCenterYRelativeToContainer;
+            } else {
+                headerLogo_blackHole.x = headerLogo_logoContainer.offsetWidth * 0.75; 
+                headerLogo_blackHole.y = headerLogo_logoContainer.offsetHeight / 2;
+            }
+        }
+
+        function headerLogo_resizeCanvas() {
+            if (!headerLogo_logoContainer || !headerLogo_canvas) return;
+            headerLogo_canvas.width = headerLogo_logoContainer.offsetWidth;
+            headerLogo_canvas.height = headerLogo_logoContainer.offsetHeight;
+            
+            if(headerLogo_logoTanimElem) headerLogo_logoTanimElem.dataset.charWrapped = ''; 
+            if(headerLogo_logoAiElem) headerLogo_logoAiElem.dataset.charWrapped = '';
+            headerLogo_tanimCharRects = []; 
+            headerLogo_aiCharRects = [];   
+            headerLogo_updateElementPositions(); 
+        }
+
+        class HeaderLogo_EnergyParticle {
+            constructor(sourceCharRect, particleColors) {
+                this.x = sourceCharRect.left + Math.random() * sourceCharRect.width;
+                this.y = sourceCharRect.top + Math.random() * sourceCharRect.height;
+                this.size = Math.random() * 2.2 + 1.5; 
+                this.color = particleColors[Math.floor(Math.random() * particleColors.length)];
+                this.life = 0;
+                this.maxLife = Math.random() * 80 + 60; 
+                this.opacity = 1;
+
+                const angleToBh = Math.atan2(headerLogo_blackHole.y - this.y, headerLogo_blackHole.x - this.x);
+                const initialSpeed = Math.random() * 1.3 + 0.8; 
+                this.vx = Math.cos(angleToBh) * initialSpeed + (Math.random() - 0.5) * 0.5; 
+                this.vy = Math.sin(angleToBh) * initialSpeed + (Math.random() - 0.5) * 0.5; 
+            }
+
+            update() {
+                const dx = headerLogo_blackHole.x - this.x;
+                const dy = headerLogo_blackHole.y - this.y;
+                const distanceSq = dx * dx + dy * dy;
+                const distance = Math.sqrt(distanceSq);
+
+                if (distance < headerLogo_blackHole.radius * 0.6) { 
+                    this.life = this.maxLife; 
+                } else {
+                    const forceFactor = headerLogo_blackHole.strength * (headerLogo_blackHole.radius * 200 / (distanceSq + 50)); 
+                    this.vx += (dx / distance) * forceFactor;
+                    this.vy += (dy / distance) * forceFactor;
+                }
+
+                const speed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
+                const maxSpeed = 4.0; 
+                if (speed > maxSpeed) {
+                    this.vx = (this.vx / speed) * maxSpeed;
+                    this.vy = (this.vy / speed) * maxSpeed;
+                }
+
+                this.x += this.vx;
+                this.y += this.vy;
+                this.life++;
+
+                if (this.life > this.maxLife * 0.55) { 
+                    this.opacity = 1 - (this.life - this.maxLife * 0.55) / (this.maxLife * 0.45);
+                }
+                if (this.opacity < 0) this.opacity = 0;
+            }
+
+            draw() {
+                headerLogo_ctx.globalAlpha = this.opacity;
+                headerLogo_ctx.beginPath();
+                const trailFactor = Math.min(Math.sqrt(this.vx*this.vx + this.vy*this.vy) * 0.8, 4.0); 
+                const prevX = this.x - this.vx * trailFactor;
+                const prevY = this.y - this.vy * trailFactor;
+                headerLogo_ctx.moveTo(prevX, prevY);
+                headerLogo_ctx.lineTo(this.x, this.y);
+                headerLogo_ctx.strokeStyle = this.color;
+                headerLogo_ctx.lineWidth = this.size;
+                headerLogo_ctx.lineCap = 'round';
+                headerLogo_ctx.shadowColor = this.color;
+                headerLogo_ctx.shadowBlur = Math.max(this.size * 2.5, 5); 
+                headerLogo_ctx.stroke();
+                headerLogo_ctx.globalAlpha = 1;
+                headerLogo_ctx.shadowBlur = 0;
+            }
+        }
+
+        function headerLogo_drawBlackHole() {
+            if (headerLogo_blackHole.x === 0 && headerLogo_blackHole.y === 0 && headerLogo_logoContainer.offsetWidth === 0) return; 
+
+            headerLogo_ctx.save();
+            headerLogo_ctx.translate(headerLogo_blackHole.x, headerLogo_blackHole.y);
+            headerLogo_ctx.rotate(headerLogo_blackHole.angle);
+
+            const coreRadius = headerLogo_blackHole.radius; 
+            const diskOuterRadius = coreRadius * 2.8; 
+            const diskInnerRadius = coreRadius * 1.2; 
+
+            headerLogo_ctx.beginPath();
+            headerLogo_ctx.moveTo(-diskOuterRadius, -coreRadius * headerLogo_blackHole.diskTilt * 0.5); 
+            headerLogo_ctx.bezierCurveTo(
+                -diskOuterRadius * 0.45, -coreRadius * headerLogo_blackHole.diskTilt * 1.3, 
+                 diskOuterRadius * 0.45, -coreRadius * headerLogo_blackHole.diskTilt * 1.3,
+                 diskOuterRadius, -coreRadius * headerLogo_blackHole.diskTilt * 0.5
+            );
+            headerLogo_ctx.bezierCurveTo(
+                 diskOuterRadius * 0.65, -coreRadius * headerLogo_blackHole.diskTilt * 0.2,
+                -diskOuterRadius * 0.65, -coreRadius * headerLogo_blackHole.diskTilt * 0.2,
+                -diskOuterRadius, -coreRadius * headerLogo_blackHole.diskTilt * 0.5
+            );
+            let gradBehind = headerLogo_ctx.createRadialGradient(0, -coreRadius * headerLogo_blackHole.diskTilt, diskInnerRadius * 0.3, 0, -coreRadius * headerLogo_blackHole.diskTilt, diskOuterRadius);
+            gradBehind.addColorStop(0, 'rgba(255, 255, 230, 0.85)'); 
+            gradBehind.addColorStop(0.3, 'rgba(255, 210, 120, 0.8)'); 
+            gradBehind.addColorStop(0.7, 'rgba(255, 160, 60, 0.7)'); 
+            gradBehind.addColorStop(1, 'rgba(220, 120, 20, 0.3)'); 
+            headerLogo_ctx.fillStyle = gradBehind;
+            headerLogo_ctx.fill();
+
+            headerLogo_ctx.beginPath();
+            headerLogo_ctx.fillStyle = 'black';
+            headerLogo_ctx.arc(0, 0, coreRadius, 0, Math.PI * 2);
+            headerLogo_ctx.fill();
+            headerLogo_ctx.beginPath();
+            headerLogo_ctx.arc(0,0, coreRadius * 1.05, 0, Math.PI * 2);
+            headerLogo_ctx.strokeStyle = 'rgba(255,255,220,0.3)';
+            headerLogo_ctx.lineWidth = 1.5;
+            headerLogo_ctx.stroke();
+
+            headerLogo_ctx.beginPath();
+            headerLogo_ctx.ellipse(0, 0, diskOuterRadius, diskOuterRadius * headerLogo_blackHole.diskTilt, 0, 0, Math.PI * 2);
+            let gradFront = headerLogo_ctx.createRadialGradient(0, 0, diskInnerRadius * 0.6, 0, 0, diskOuterRadius);
+            gradFront.addColorStop(0, 'rgba(255, 255, 250, 1)'); 
+            gradFront.addColorStop(0.05, 'rgba(255, 255, 220, 0.98)'); 
+            gradFront.addColorStop(0.2, 'rgba(255, 230, 150, 0.95)'); 
+            gradFront.addColorStop(0.5, 'rgba(255, 190, 80, 0.9)'); 
+            gradFront.addColorStop(0.8, 'rgba(255, 120, 30, 0.8)'); 
+            gradFront.addColorStop(1, 'rgba(200, 70, 10, 0.35)'); 
+            headerLogo_ctx.fillStyle = gradFront;
+            headerLogo_ctx.fill();
+            
+            headerLogo_ctx.restore();
+            headerLogo_blackHole.angle += 0.015; 
+        }
+
+        function headerLogo_animate(currentTime) {
+            headerLogo_animationFrameId = requestAnimationFrame(headerLogo_animate);
+            if(!headerLogo_canvas || headerLogo_canvas.width === 0 || headerLogo_canvas.height === 0) return;
+
+            headerLogo_ctx.clearRect(0, 0, headerLogo_canvas.width, headerLogo_canvas.height);
+            headerLogo_drawBlackHole();
+
+            if (currentTime - headerLogo_lastParticleEmitTime > headerLogo_particleEmitInterval) {
+                const validAiChars = headerLogo_aiCharRects.filter(r => r && r.width > 0);
+                if (validAiChars.length > 0) {
+                    const randomCharRect = validAiChars[Math.floor(Math.random() * validAiChars.length)];
+                    for(let i=0; i<2; i++) { 
+                        headerLogo_energyParticlesArray.push(new HeaderLogo_EnergyParticle(randomCharRect, headerLogo_aiParticleColors));
+                    }
+                }
+
+                const validTanimChars = headerLogo_tanimCharRects.filter(r => r && r.width > 0);
+                if (validTanimChars.length > 0) {
+                    const randomCharRect = validTanimChars[Math.floor(Math.random() * validTanimChars.length)];
+                     for(let i=0; i<2; i++) { 
+                        headerLogo_energyParticlesArray.push(new HeaderLogo_EnergyParticle(randomCharRect, headerLogo_tanimParticleColors));
+                    }
+                }
+                headerLogo_lastParticleEmitTime = currentTime;
+            }
+
+            for (let i = headerLogo_energyParticlesArray.length - 1; i >= 0; i--) {
+                const p = headerLogo_energyParticlesArray[i];
+                p.update();
+                if (p.opacity <= 0 || p.life >= p.maxLife) {
+                    headerLogo_energyParticlesArray.splice(i, 1);
+                } else {
+                    p.draw();
+                }
+            }
+            if (headerLogo_energyParticlesArray.length > 150) { 
+                headerLogo_energyParticlesArray.splice(0, headerLogo_energyParticlesArray.length - 150);
+            }
+        }
+        
+        function headerLogo_startAnimation() {
+            if (headerLogo_animationFrameId) {
+                cancelAnimationFrame(headerLogo_animationFrameId);
+            }
+            headerLogo_resizeCanvas(); 
+
+            let attempts = 0;
+            const maxAttempts = 40; 
+            const checkPositionsAndStart = () => {
+                headerLogo_updateElementPositions(); 
+                const tanimReady = headerLogo_tanimCharRects.some(r => r && r.width > 0);
+                const aiReady = headerLogo_aiCharRects.some(r => r && r.width > 0);
+                const blackHoleReady = headerLogo_blackHole.x !== 0 || headerLogo_blackHole.y !== 0 || (headerLogo_logoContainer && headerLogo_logoContainer.offsetWidth > 0);
+                
+                if ((tanimReady || aiReady) && blackHoleReady && headerLogo_canvas && headerLogo_canvas.width > 0 && headerLogo_canvas.height > 0) {
+                    headerLogo_energyParticlesArray = [];
+                    headerLogo_lastParticleEmitTime = performance.now();
+                    headerLogo_animate(performance.now());
+                } else if (attempts < maxAttempts) {
+                    attempts++;
+                    setTimeout(checkPositionsAndStart, 100); 
+                } else {
+                    console.error("Header Logo: Element positions could not be determined for animation or canvas not ready.");
+                }
+            };
+            setTimeout(checkPositionsAndStart, 50);
+        }
+        // --- END: New Animated Logo JavaScript ---
+
+        // --- START: Code Block Feature Functions ---
+        function copyCodeToClipboard(codeToCopy, button) {
+            const textarea = document.createElement('textarea');
+            textarea.value = codeToCopy;
+            textarea.style.position = 'fixed'; 
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                const originalText = button.innerHTML;
+                const originalTitle = button.title;
+                button.innerHTML = '✅'; 
+                button.title = translations[currentLanguage].codeCopied;
+                setTimeout(() => {
+                    button.innerHTML = '📄'; 
+                    button.title = originalTitle;
+                }, 2000);
+            } catch (err) {
+                console.error('Failed to copy code: ', err);
+            }
+            document.body.removeChild(textarea);
+        }
+
+        function showCodePreview(code, language) {
+            codePreviewModalTitleEl.textContent = translations[currentLanguage].codePreviewModalTitle + (language ? ` (${language.toUpperCase()})` : '');
+            
+            const lowerLang = language.toLowerCase();
+
+            if (lowerLang === 'html' || (!language && (code.includes('<html') || code.includes('<!DOCTYPE html')))) {
+                codePreviewIframeEl.style.display = 'block';
+                codePreviewPreEl.style.display = 'none';
+                const iframeContent = `
+                    <html>
+                        <head>
+                            <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' https://cdn.tailwindcss.com; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.googleapis.com https://fonts.gstatic.com; img-src https: data:; connect-src https:;">
+                            <script src="https://cdn.tailwindcss.com"><\/script> 
+                            <style>body{margin:10px; font-family: sans-serif; color: #333; background-color: #fff;}<\/style>
+                        </head>
+                        <body>${code}</body>
+                    </html>`;
+                codePreviewIframeEl.srcdoc = iframeContent;
+            } else {
+                codePreviewIframeEl.style.display = 'none';
+                codePreviewPreEl.style.display = 'block';
+                codePreviewCodeEl.textContent = code;
+            }
+            codePreviewModalEl.style.display = 'flex'; 
+        }
+
+        closeCodePreviewModalBtnEl.addEventListener('click', () => {
+            codePreviewModalEl.style.display = 'none';
+            codePreviewIframeEl.srcdoc = ''; 
+        });
+        window.addEventListener('click', (event) => {
+            if (event.target === codePreviewModalEl) {
+                codePreviewModalEl.style.display = 'none';
+                codePreviewIframeEl.srcdoc = ''; 
+            }
+        });
+        // --- END: Code Block Feature Functions ---
+
+
+        function setMicState(state) {
+            micButtonEl.classList.remove('mic-listening', 'mic-ai-speaking');
+            let tooltipText = translations[currentLanguage].speakTooltip;
+            if (state === 'listening') {
+                micButtonEl.classList.add('mic-listening');
+                tooltipText = translations[currentLanguage].micListeningTooltip;
+                isRecording = true;
+            } else if (state === 'ai-speaking') {
+                micButtonEl.classList.add('mic-ai-speaking');
+                tooltipText = translations[currentLanguage].micAISpeakingTooltip;
+                isAiSpeaking = true;
+                isRecording = false;
+            } else {
+                isRecording = false;
+                isAiSpeaking = false;
+                if (state === 'processing') {
+                    tooltipText = translations[currentLanguage].micProcessingTooltip;
+                }
+            }
+            micButtonEl.title = tooltipText;
+        }
+
+        function updateUIText() {
+            const lang = translations[currentLanguage];
+            document.documentElement.lang = currentLanguage; // Update HTML lang attribute
+            languageToggleButtonEl.textContent = lang.toggleButton;
+            thinkingTooltipEl.textContent = translations['en'].thinkingModeTooltip;
+            researchTooltipEl.textContent = translations['en'].researchModeTooltip;
+            imageUploadTooltipEl.textContent = translations['en'].imageUploadTooltip;
+            closeThinkingThoughtsBtnEl.title = lang.closeThoughtsTooltip;
+            messageInputEl.placeholder = lang.inputPlaceholder;
+            sendButtonEl.textContent = lang.sendButton;
+            loadingIndicatorEl.textContent = lang.loading;
+            if (!isRecording && !isAiSpeaking) {
+                micButtonEl.title = lang.speakTooltip;
+            }
+            if (chatLogEl.children.length === 1 && chatLogEl.firstElementChild.classList.contains('ai-message-wrapper')) {
+                const firstMessageBubble = chatLogEl.firstElementChild.querySelector('.ai-message');
+                if (firstMessageBubble && chatHistory.length === 1 &&
+                    (chatHistory[0].parts[0].text === translations.bn.aiDefaultGreeting ||
+                     chatHistory[0].parts[0].text === translations.en.aiDefaultGreeting )
+                    ) {
+                    const updatedGreeting = lang.aiDefaultGreeting;
+                    const contentArea = firstMessageBubble.querySelector('.message-content-area') || firstMessageBubble;
+                    contentArea.innerHTML = updatedGreeting.replace(/\n/g, '<br>');
+                    chatHistory[0].parts[0].text = updatedGreeting;
+                }
+            }
+        }
+
+        languageToggleButtonEl.addEventListener('click', () => {
+            currentLanguage = currentLanguage === 'bn' ? 'en' : 'bn';
+            if (recognition) {
+                recognition.lang = currentLanguage === 'bn' ? 'bn-BD' : 'en-US';
+            }
+            updateUIText(); // This will now also update html lang
+            if (chatHistory.length <= 1) {
+                clearChatLog();
+                const initialGreeting = translations[currentLanguage].aiDefaultGreeting;
+                appendMessage('ai', initialGreeting);
+                chatHistory = [{ role: "model", parts: [{ text: initialGreeting }] }];
+            }
+        });
+
+        sendButtonEl.addEventListener('click', () => {
+            lastInputWasVoice = false;
+            processSendMessage();
+        });
+        messageInputEl.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                lastInputWasVoice = false;
+                processSendMessage();
+            }
+        });
+
+        micButtonEl.addEventListener('click', toggleSpeechRecognition);
+        thinkingButtonEl.addEventListener('click', () => toggleMode('deepThinking'));
+        researchButtonEl.addEventListener('click', () => toggleMode('deepResearch'));
+        imageInputEl.addEventListener('change', handleImageUpload);
+        closeThinkingThoughtsBtnEl.addEventListener('click', () => {
+            thinkingThoughtsWrapperEl.style.display = 'none';
+            thinkingThoughtsVisible = false;
+            clearInterval(modeInterval);
+        });
+
+        function toggleMode(mode) {
+            const buttonElement = mode === 'deepThinking' ? thinkingButtonEl : researchButtonEl;
+            const otherButtonElement = mode === 'deepThinking' ? researchButtonEl : thinkingButtonEl;
+            if (currentMode === mode) {
+                currentMode = "normal";
+                buttonElement.classList.remove('active');
+                stopModeEffects();
+                thinkingThoughtsWrapperEl.style.display = 'none';
+                thinkingThoughtsVisible = false;
+            } else {
+                currentMode = mode;
+                buttonElement.classList.add('active');
+                otherButtonElement.classList.remove('active');
+                if (mode === 'deepThinking') {
+                    thinkingThoughtsVisible = true;
+                    thinkingThoughtsWrapperEl.style.display = 'block';
+                    aiThoughtsContentEl.innerHTML = translations[currentLanguage].thinkingThoughtsPlaceholder.replace(/\n/g, '<br>');
+                } else {
+                    thinkingThoughtsWrapperEl.style.display = 'none';
+                    thinkingThoughtsVisible = false;
+                }
+                stopModeEffects();
+            }
+        }
+
+        function stopModeEffects() {
+            clearInterval(modeInterval);
+            if (currentMode !== 'deepThinking' && thinkingThoughtsWrapperEl) {
+                 thinkingThoughtsWrapperEl.style.display = 'none';
+            }
+        }
+
+        function appendMessage(sender, message, messageId = null, imageUrl = null) {
+            const messageWrapper = document.createElement('div');
+            messageWrapper.classList.add('chat-message-wrapper', sender === 'user' ? 'user-message-wrapper' : 'ai-message-wrapper');
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('chat-message', sender === 'user' ? 'user-message' : 'ai-message');
+            if (messageId) messageElement.id = messageId;
+            messageElement.dataset.originalText = message; 
+            messageElement.dataset.mathState = 'rendered'; 
+
+            const messageContentArea = document.createElement('div'); 
+            messageContentArea.classList.add('message-content-area');
+
+            if (sender === 'ai' && message.trim().startsWith("```") && message.trim().endsWith("```")) {
+                const codeBlockContainer = document.createElement('div');
+                codeBlockContainer.classList.add('ai-code-block-container');
+                const pre = document.createElement('pre');
+                const codeEl = document.createElement('code');
+                let langMatch = message.match(/^```(\w*)\n/);
+                let language = langMatch && langMatch[1] ? langMatch[1] : 'plaintext';
+                let actualCode = message.replace(/^```\w*\n?/, '').replace(/\n?```$/, '');
+                if (language) codeEl.classList.add(`language-${language}`);
+                codeEl.textContent = actualCode;
+                pre.appendChild(codeEl);
+                codeBlockContainer.appendChild(pre);
+                const controlsDiv = document.createElement('div');
+                controlsDiv.classList.add('code-controls');
+                const copyButton = document.createElement('button');
+                copyButton.classList.add('code-control-button', 'copy-code-btn');
+                copyButton.innerHTML = '📄'; 
+                copyButton.title = translations[currentLanguage].codeBlockCopyTooltip;
+                copyButton.addEventListener('click', () => copyCodeToClipboard(actualCode, copyButton));
+                const previewButton = document.createElement('button');
+                previewButton.classList.add('code-control-button', 'preview-code-btn');
+                previewButton.innerHTML = '👁️'; 
+                previewButton.title = translations[currentLanguage].codeBlockPreviewTooltip;
+                previewButton.addEventListener('click', () => showCodePreview(actualCode, language));
+                controlsDiv.appendChild(copyButton);
+                controlsDiv.appendChild(previewButton);
+                codeBlockContainer.appendChild(controlsDiv);
+                messageElement.appendChild(codeBlockContainer); 
+            } else {
+                const tempDiv = document.createElement('div');
+                tempDiv.textContent = message;
+                messageContentArea.innerHTML = tempDiv.innerHTML.replace(/\n/g, '<br>');
+                messageElement.appendChild(messageContentArea);
+
+                if (sender === 'ai' && /\$\$|\\\[|\\\(|\\begin\{|\\frac|\\sqrt|\\sum|\\int|_|\^/.test(message)) {
+                    const mathToggleButton = document.createElement('button');
+                    mathToggleButton.innerHTML = '𝑓𝑥';
+                    mathToggleButton.classList.add('math-toggle-button');
+                    mathToggleButton.title = translations[currentLanguage].mathToggleShowLaTeX;
+                    mathToggleButton.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        toggleMathDisplay(messageElement);
+                    });
+                    messageElement.appendChild(mathToggleButton);
+                    renderMathInElement(messageContentArea);
+                }
+            }
+            
+            if (sender === 'user') {
+                if (imageUrl) {
+                    const imgElement = document.createElement('img');
+                    imgElement.src = imageUrl;
+                    imgElement.alt = translations[currentLanguage].imageInChatAlt;
+                    imgElement.classList.add('message-image');
+                    if (message) messageContentArea.insertBefore(imgElement, messageContentArea.firstChild);
+                    else messageElement.appendChild(imgElement); 
+                }
+            }
+
+            messageWrapper.appendChild(messageElement);
+            chatLogEl.appendChild(messageWrapper);
+            requestAnimationFrame(() => chatLogEl.scrollTop = chatLogEl.scrollHeight);
+            return messageElement;
+        }
+
+        function toggleMathDisplay(messageElement) {
+            const contentArea = messageElement.querySelector('.message-content-area');
+            const button = messageElement.querySelector('.math-toggle-button');
+            if (!contentArea || !button) return;
+            const currentState = messageElement.dataset.mathState;
+            const originalText = messageElement.dataset.originalText;
+            const tempDiv = document.createElement('div');
+            tempDiv.textContent = originalText;
+            const sanitizedOriginalTextHtml = tempDiv.innerHTML.replace(/\n/g, '<br>');
+            if (currentState === 'rendered') {
+                if (window.MathJax && window.MathJax.startup && window.MathJax.startup.document) {
+                    window.MathJax.startup.document.clearMathItemsWithin(contentArea);
+                }
+                contentArea.innerHTML = sanitizedOriginalTextHtml;
+                messageElement.dataset.mathState = 'raw';
+                button.textContent = '∑';
+                button.title = translations[currentLanguage].mathToggleRenderMath;
+            } else {
+                contentArea.innerHTML = sanitizedOriginalTextHtml;
+                renderMathInElement(contentArea);
+                messageElement.dataset.mathState = 'rendered';
+                button.textContent = '𝑓𝑥';
+                button.title = translations[currentLanguage].mathToggleShowLaTeX;
+            }
+            requestAnimationFrame(() => chatLogEl.scrollTop = chatLogEl.scrollHeight);
+        }
+
+        function renderMathInElement(element) {
+            if (window.MathJax && window.MathJax.typesetPromise) {
+                window.MathJax.typesetPromise([element])
+                    .then(() => {
+                        requestAnimationFrame(() => chatLogEl.scrollTop = chatLogEl.scrollHeight);
+                    })
+                    .catch((err) => console.error('MathJax typesetting error:', err));
+            }
+        }
+
+        function addTimerToMessage(messageElement, startTime) {
+            let timerDisplay = messageElement.querySelector('.message-timer');
+            if (!timerDisplay) {
+                const wrapper = messageElement.closest('.chat-message-wrapper');
+                if (wrapper) timerDisplay = wrapper.querySelector('.message-timer');
+            }
+            if (!timerDisplay) {
+                timerDisplay = document.createElement('div');
+                timerDisplay.classList.add('message-timer');
+                const contentArea = messageElement.querySelector('.message-content-area');
+                if (contentArea) messageElement.insertBefore(timerDisplay, contentArea);
+                else messageElement.insertBefore(timerDisplay, messageElement.firstChild);
+            }
+            const intervalId = setInterval(() => {
+                const elapsedTime = Math.floor((Date.now() - startTime) / 1000);
+                timerDisplay.textContent = translations[currentLanguage].elapsedTime(elapsedTime);
+            }, 1000);
+            return intervalId;
+        }
+
+        const tanimSpecialResponseBn = "তানিম একজন ছাত্র, সে এখন কলেজে পড়াশোনা করছে। তার এই এআই নিজ হতেই দিনের পর দিন আপডেট হচ্ছে এবং নিজের চেতনা তৈরিতে চেষ্টা করে যাচ্ছে, এমন ভাবে এই এআই ডিজাইন করা হয়েছে।";
+        const tanimSpecialResponseEn = "Tanim is a student, he is currently studying in college. His AI is updating itself day by day and is trying to develop its own consciousness, this AI has been designed in such a way.";
+        const tanimSpecialQueries = {
+            bn: ["তোমার নাম কি", "তোমাকে কে বানিয়েছে", "তুমি কোথা থেকে এসেছো", "কে তৈরি করেছে", "তোমার স্রষ্টা কে", "তোমার পরিচয় কি", "তানিম কে", "তানিম কি করে", "এই এআই এর ডেভেলপার কে"],
+            en: ["what is your name", "who made you", "who created you", "where are you from", "your creator", "what are you", "who are you", "who is tanim", "what does tanim do", "who is the developer of this ai"]
+        };
+
+        function toggleSpeechRecognition() {
+            if (!SpeechRecognition) {
+                appendMessage('ai', currentLanguage === 'bn' ? "দুঃখিত, আপনার ব্রাউজারে স্পিচ রিকগনিশন সমর্থিত নয়।" : "Sorry, speech recognition is not supported in your browser.");
+                return;
+            }
+            if (isAiSpeaking) {
+                speechSynthesis.cancel();
+                setMicState('default');
+                return;
+            }
+            if (isRecording) {
+                recognition.stop();
+                setMicState('processing');
+            } else {
+                setMicState('listening');
+                recognition.lang = currentLanguage === 'bn' ? 'bn-BD' : 'en-US';
+                try {
+                    recognition.start();
+                } catch (e) {
+                    console.error("Error starting recognition:", e);
+                    setMicState('default');
+                    appendMessage('ai', translations[currentLanguage].micError + (currentLanguage === 'bn' ? ` (ত্রুটি: ${e.name})` : ` (Error: ${e.name})`));
+                }
+            }
+        }
+
+        function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    currentImageFullDataUrl = e.target.result;
+                    imagePreviewEl.src = currentImageFullDataUrl;
+                    imagePreviewEl.style.display = 'block';
+                    currentMimeType = file.type;
+                    currentBase64Image = currentImageFullDataUrl.split(',')[1];
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function speakAiResponse(text, callback) {
+            if (speechSynthesis && text) {
+                let speakableText = text.replace(/\$\$[^$]*\$\$/g, '').replace(/\$[^$]*\$/g, '').replace(/\\\[.*?\\\]/g, '').replace(/\\\(.*?\\\)/g, '');
+                currentSpeechUtterance = new SpeechSynthesisUtterance(speakableText);
+                currentSpeechUtterance.lang = currentLanguage === 'bn' ? 'bn-BD' : 'en-US';
+                const voices = speechSynthesis.getVoices();
+                let targetVoice = null;
+                if (currentLanguage === 'bn') {
+                    targetVoice = voices.find(voice => voice.lang === 'bn-BD' || voice.lang.startsWith('bn-'));
+                } else {
+                    targetVoice = voices.find(voice => voice.lang === 'en-US' || voice.lang.startsWith('en-'));
+                }
+                if (targetVoice) currentSpeechUtterance.voice = targetVoice;
+                currentSpeechUtterance.onstart = () => setMicState('ai-speaking');
+                currentSpeechUtterance.onend = () => {
+                    setMicState('default');
+                    if (callback) callback();
+                };
+                currentSpeechUtterance.onerror = (e) => {
+                    console.error("Speech synthesis error:", e);
+                    setMicState('default');
+                    if (callback) callback();
+                };
+                speechSynthesis.cancel();
+                speechSynthesis.speak(currentSpeechUtterance);
+            } else {
+                 if (callback) callback();
+            }
+        }
+
+        function clearChatLog() {
+            while (chatLogEl.firstChild) {
+                chatLogEl.removeChild(chatLogEl.firstChild);
+            }
+        }
+
+        async function processSendMessage() {
+            const userMessageText = messageInputEl.value.trim();
+            if (!userMessageText && !currentBase64Image) return;
+            let messageToSendForDisplay = userMessageText;
+            let imageForChatDisplay = null;
+            if (currentBase64Image) {
+                imageForChatDisplay = currentImageFullDataUrl;
+                if (!userMessageText) messageToSendForDisplay = translations[currentLanguage].imageAnalysisRequest;
+            }
+            appendMessage('user', messageToSendForDisplay || translations[currentLanguage].imageAnalysisRequest, null, imageForChatDisplay);
+            const actualUserTextForHistory = userMessageText || "";
+            let currentUserTurnPartsForHistory = [{ text: actualUserTextForHistory }];
+            if (currentBase64Image && activeApiProvider === 'gemini') {
+                 currentUserTurnPartsForHistory.push({ inlineData: { mimeType: currentMimeType || "image/jpeg", data: currentBase64Image } });
+            }
+            chatHistory.push({ role: "user", parts: currentUserTurnPartsForHistory });
+            messageInputEl.value = '';
+            const lowerCaseUserMessage = (userMessageText || "").toLowerCase();
+            let isSpecialQuery = false;
+            const queriesToCheck = currentLanguage === 'bn' ? tanimSpecialQueries.bn : tanimSpecialQueries.en;
+            for (const query of queriesToCheck) {
+                if (lowerCaseUserMessage.includes(query.toLowerCase())) {
+                    isSpecialQuery = true;
+                    break;
+                }
+            }
+            if (isSpecialQuery) {
+                const aiResponseText = currentLanguage === 'bn' ? tanimSpecialResponseBn : tanimSpecialResponseEn;
+                appendMessage('ai', aiResponseText);
+                chatHistory.push({ role: "model", parts: [{ text: aiResponseText }] });
+                if (lastInputWasVoice) speakAiResponse(aiResponseText, () => {});
+                loadingIndicatorEl.style.display = 'none';
+                if (currentBase64Image) {
+                    currentBase64Image = null; currentMimeType = null; currentImageFullDataUrl = null;
+                    imageInputEl.value = null; imagePreviewEl.style.display = 'none';
+                }
+                return;
+            }
+            loadingIndicatorEl.style.display = 'block';
+            imagePreviewEl.style.display = 'none';
+            modeStartTime = Date.now();
+            let promptForApi = userMessageText;
+            let apiPayloadParts = [];
+            let modePrefix = "";
+            if (currentMode === "deepThinking") {
+                modePrefix = currentLanguage === 'bn' ? "একটু গভীরভাবে চিন্তা করে, ধাপে ধাপে বিশ্লেষণ করে উত্তর দিন: " : "Thinking deeply, analyzing step-by-step, answer: ";
+            } else if (currentMode === "deepResearch" && userMessageText) {
+                modePrefix = currentLanguage === 'bn' ? `"${userMessageText}" এই বিষয়ে বিস্তারিত অনুসন্ধান করে উত্তর দিন: ` : `After a deep search for "${userMessageText}", answer: `;
+            }
+            promptForApi = modePrefix + (userMessageText || "");
+            
+            const mathDisplayInstructionBn = " **গণিত ও সংখ্যা প্রদর্শন সংক্রান্ত নির্দেশাবলী:** ১. সাধারণ বর্ণনার মধ্যে গাণিতিক শব্দ বা মান (যেমন: ভেক্টর A, বেগ ৫ মিটার/সেকেন্ড) সাধারণ বাংলা টেক্সট হিসেবে লিখবেন এবং সকল সংখ্যা ইংরেজি অংকে (0-9) ব্যবহার করবেন; এখানে LaTeX ব্যবহার করবেন না। ২. শুধুমাত্র জটিল গাণিতিক সমীকরণ বা রাশিমালা দেখানোর জন্য LaTeX (`$...$` বা `$$...$$`) ব্যবহার করুন। ৩. LaTeX এ ব্যবহৃত সকল একক (যেমন kg, m/s) এবং সকল সংখ্যা (যেমন 1, 2, 3) অবশ্যই ইংরেজি অক্ষরে/অংকে (0-9) লিখবেন। ৪. আপনার সম্পূর্ণ উত্তরে ব্যবহৃত সকল সংখ্যা (সাধারণ টেক্সট অথবা LaTeX) অবশ্যই ইংরেজি অংকে (0-9) হবে। ৫. জটিল গাণিতিক ধারণাগুলো পরিষ্কারভাবে ব্যাখ্যা করুন।";
+            const mathDisplayInstructionEn = " **Mathematical and Numeral Display Instructions:** 1. For mathematical terms or values within general descriptions (e.g., Vector A, velocity 5 m/s), write them as plain text using English numerals (0-9); do not use LaTeX for these. 2. Use LaTeX (`$...$` or `$$...$$`) **only** for displaying complex mathematical equations or expressions. 3. All units (e.g., kg, m/s) and all numbers (e.g., 1, 2, 3) used within LaTeX expressions MUST be in English letters/numerals (0-9). 4. All numbers used anywhere in your entire response (whether in plain text or LaTeX) MUST be in English numerals (0-9). 5. Explain complex mathematical concepts clearly.";
+            
+            promptForApi += (currentLanguage === 'bn' ? mathDisplayInstructionBn : mathDisplayInstructionEn);
+
+            if (currentMode === "deepThinking" && thinkingThoughtsVisible && aiThoughtsContentEl) {
+                const thinkingSteps = translations[currentLanguage].aiThinkingProcess;
+                let thoughtsHTML = "";
+                thinkingSteps.forEach((step, index) => {
+                    let currentStepText = step;
+                    if (index === 1) { // The "imaginary thought" step
+                        const userQuerySummary = userMessageText ? `"${userMessageText.substring(0, 30)}${userMessageText.length > 30 ? '...' : ''}"` : (currentBase64Image ? (currentLanguage === 'bn' ? "আপনার ছবি" : "your image") : (currentLanguage === 'bn' ? "আপনার প্রশ্ন" : "your query"));
+                        currentStepText = currentLanguage === 'bn' ?
+                            `${userQuerySummary} সম্পর্কিত তথ্য বিশ্লেষণ করছি এবং একটি সৃজনশীল উত্তর তৈরি করার চেষ্টা করছি।` :
+                            `Analyzing information related to ${userQuerySummary} and trying to formulate a creative response.`;
+                    }
+                    thoughtsHTML += `<p>${currentStepText}</p>`;
+                });
+                aiThoughtsContentEl.innerHTML = thoughtsHTML;
+            }
+
+
+            if (currentBase64Image && activeApiProvider === 'gemini') {
+                apiPayloadParts.push({ text: promptForApi });
+                apiPayloadParts.push({ inlineData: { mimeType: currentMimeType || "image/jpeg", data: currentBase64Image } });
+            } else {
+                apiPayloadParts.push({ text: promptForApi });
+            }
+            try {
+                const apiHistoryPayload = chatHistory.slice(0, -1).map(turn => {
+                    let parts = [];
+                    if (turn.parts && Array.isArray(turn.parts)) {
+                        turn.parts.forEach(part => {
+                            if (part.text) parts.push({ text: part.text });
+                            else if (part.inlineData && part.inlineData.data && part.inlineData.mimeType) {
+                                parts.push({ inlineData: { mimeType: part.inlineData.mimeType, data: part.inlineData.data } });
+                            }
+                        });
+                    }
+                    return { role: turn.role, parts: parts };
+                });
+                const payload = { contents: [...apiHistoryPayload, { role: "user", parts: apiPayloadParts }] };
+                const apiKeyForFetch = "AIzaSyD0s-Q965vxpWkGU6ZIHVtpGFLAk6Z4oTI";
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKeyForFetch}`;
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({ error: { message: "Unknown error structure" } }));
+                    console.error("API Error Response:", errorData);
+                    throw new Error(`${translations[currentLanguage].errorAPIFetch} ${response.status} ${response.statusText}. Details: ${errorData?.error?.message || 'Unknown error'}`);
+                }
+                const result = await response.json();
+                let aiResponseText = translations[currentLanguage].errorAPIGeneric;
+                if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                    aiResponseText = result.candidates[0].content.parts.map(part => part.text).join("\n");
+                } else if (result.promptFeedback && result.promptFeedback.blockReason) {
+                     aiResponseText = currentLanguage === 'bn' ?
+                        `আপনার অনুরোধটি প্রক্রিয়া করা যায়নি কারণ: ${result.promptFeedback.blockReason}. অনুগ্রহ করে আপনার প্রশ্ন পরিবর্তন করে আবার চেষ্টা করুন।` :
+                        `Your request could not be processed because: ${result.promptFeedback.blockReason}. Please try modifying your prompt.`;
+                     if (result.promptFeedback.safetyRatings) console.warn("Safety ratings:", result.promptFeedback.safetyRatings);
+                }
+                appendMessage('ai', aiResponseText);
+                chatHistory.push({ role: "model", parts: [{ text: aiResponseText }] });
+                if (lastInputWasVoice) speakAiResponse(aiResponseText, () => {});
+            } catch (error) {
+                console.error("Error sending message:", error);
+                appendMessage('ai', `${translations[currentLanguage].errorAPIFetch} ${error.message}`);
+            } finally {
+                loadingIndicatorEl.style.display = 'none';
+                if (currentBase64Image) {
+                    currentBase64Image = null; currentMimeType = null; currentImageFullDataUrl = null;
+                    imageInputEl.value = null;
+                }
+            }
+        }
+
+        // Initial setup
+        document.documentElement.lang = currentLanguage; // Set initial HTML lang
+        updateUIText();
+        const initialGreeting = translations[currentLanguage].aiDefaultGreeting;
+        appendMessage('ai', initialGreeting);
+        chatHistory.push({ role: "model", parts: [{ text: initialGreeting }] });
+        speechSynthesis.onvoiceschanged = () => { /* console.log("Available voices:", speechSynthesis.getVoices()); */ };
+
+        // Start header logo animation
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', headerLogo_startAnimation);
+        } else {
+            headerLogo_startAnimation();
+        }
+        window.addEventListener('resize', () => {
+            if (headerLogo_animationFrameId) cancelAnimationFrame(headerLogo_animationFrameId);
+            setTimeout(headerLogo_startAnimation, 150); 
+        });
+
+    </script>
+</body>
+</html>
